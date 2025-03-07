@@ -1,28 +1,17 @@
-# 在頂層定義所有 ARG 變數
 ARG ALPINE_VERSION=3.18
-ARG K6_VERSION=0.49.0
-ARG XK6_SQL_VERSION=0.1.0
-ARG XK6_SQL_POSTGRES_VERSION=0.1.0
-ARG API_GATEWAY_VERSION
-ARG MGMT_BACKEND_VERSION
-ARG CONSOLE_VERSION
-ARG PIPELINE_BACKEND_VERSION
-ARG MODEL_BACKEND_VERSION
-ARG ARTIFACT_BACKEND_VERSION
-ARG CONTROLLER_MODEL_VERSION
 
 FROM golang:alpine${ALPINE_VERSION} AS base
 
 RUN apk add --no-cache docker docker-compose docker-cli-compose docker-cli-buildx openrc containerd git bash make wget vim curl openssl util-linux && \
     rm -rf /var/cache/apk/*
 
-# 安裝 xk6 和 k6
+# 安裝 xk6 和 k6 - 使用硬編碼版本
 RUN git clone https://github.com/grafana/xk6.git /xk6 && \
     cd /xk6 && \
     go install ./cmd/xk6 && \
-    xk6 build v${K6_VERSION} \
-    --with github.com/grafana/xk6-sql@v${XK6_SQL_VERSION} \
-    --with github.com/grafana/xk6-sql-driver-postgres@v${XK6_SQL_POSTGRES_VERSION} \
+    xk6 build v0.49.0 \
+    --with github.com/grafana/xk6-sql@v0.1.0 \
+    --with github.com/grafana/xk6-sql-driver-postgres@v0.1.0 \
     --output /usr/bin/k6 && \
     rm -rf /xk6
 
@@ -83,5 +72,5 @@ RUN git clone --depth=1 -b v${API_GATEWAY_VERSION} -c advice.detachedHead=false 
     git clone --depth=1 -b v${MODEL_BACKEND_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/model-backend.git && \
     git clone --depth=1 -b v${ARTIFACT_BACKEND_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/artifact-backend.git
 
-# 設定一個預設的 CMD 或 ENTRYPOINT
+# 設定一個預設的 CMD
 CMD ["/bin/sh"]
