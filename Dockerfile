@@ -4,7 +4,7 @@ FROM golang:alpine${ALPINE_VERSION} AS base
 RUN apk add --update docker docker-compose docker-cli-compose docker-cli-buildx openrc containerd git bash make wget vim curl openssl util-linux
 
 ARG K6_VERSION XK6_VERSION XK6_SQL_VERSION XK6_SQL_POSTGRES_VERSION
-RUN go install go.k6.io/xk6/cmd/xk6@v${XK6_VERSION}
+RUN go install github.com/grafana/xk6/cmd/xk6@latest
 RUN xk6 build v${K6_VERSION} \
   --with github.com/grafana/xk6-sql@v${XK6_SQL_VERSION} \
   --with github.com/grafana/xk6-sql-driver-postgres@v${XK6_SQL_POSTGRES_VERSION} \
