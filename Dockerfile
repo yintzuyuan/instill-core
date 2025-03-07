@@ -12,10 +12,10 @@ RUN git clone https://github.com/grafana/xk6.git /xk6 && \
     cd /xk6 && \
     go install ./cmd/xk6
     
-RUN xk6 build v${K6_VERSION} \
-  --with github.com/grafana/xk6-sql@v${XK6_SQL_VERSION} \
-  --with github.com/grafana/xk6-sql-driver-postgres@v${XK6_SQL_POSTGRES_VERSION} \
-  --output /usr/bin/k6
+RUN xk6 build v0.49.0 \
+    --with github.com/grafana/xk6-sql@v0.2.0 \
+    --with github.com/grafana/xk6-sql-driver-postgres@v0.2.0 \
+    --output /usr/bin/k6
 
 # Install Helm
 RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
