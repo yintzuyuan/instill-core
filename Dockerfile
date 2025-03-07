@@ -2,10 +2,10 @@ ARG ALPINE_VERSION=3.18
 
 FROM golang:alpine${ALPINE_VERSION} AS base
 
-RUN apk add --no-cache docker docker-compose docker-cli-compose docker-cli-buildx openrc containerd git bash make wget vim curl openssl util-linux && \
+RUN apk add --no-cache docker docker-compose docker-cli-compose docker-cli-buildx openrc containerd git bash make wget vim curl openssl util-linux pcre2 && \
     rm -rf /var/cache/apk/*
 
-# 安裝 xk6 和 k6 - 使用硬編碼版本
+# 安裝 xk6 和 k6
 RUN git clone https://github.com/grafana/xk6.git /xk6 && \
     cd /xk6 && \
     go install ./cmd/xk6 && \
@@ -26,11 +26,14 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 
 FROM alpine:${ALPINE_VERSION} AS latest
 
-# 只複製必要的檔案
-COPY --from=base /usr/bin/ /usr/bin/
+# 安裝必要的庫和 git
+RUN apk add --no-cache git pcre2 && \
+    rm -rf /var/cache/apk/*
+
+# 複製必要檔案
+COPY --from=base /usr/bin/docker* /usr/bin/
+COPY --from=base /usr/bin/k6 /usr/bin/
 COPY --from=base /usr/local/bin/ /usr/local/bin/
-COPY --from=base /lib/ /lib/
-COPY --from=docker:dind /usr/local/bin/ /usr/local/bin/
 
 ARG CACHE_DATE
 RUN echo "Instill Core latest codebase cloned on ${CACHE_DATE}"
@@ -46,11 +49,14 @@ RUN git clone --depth=1 https://github.com/instill-ai/artifact-backend.git && \
 
 FROM alpine:${ALPINE_VERSION} AS release
 
-# 只複製必要的檔案
-COPY --from=base /usr/bin/ /usr/bin/
+# 安裝必要的庫和 git
+RUN apk add --no-cache git pcre2 && \
+    rm -rf /var/cache/apk/*
+
+# 複製必要檔案
+COPY --from=base /usr/bin/docker* /usr/bin/
+COPY --from=base /usr/bin/k6 /usr/bin/
 COPY --from=base /usr/local/bin/ /usr/local/bin/
-COPY --from=base /lib/ /lib/
-COPY --from=docker:dind /usr/local/bin/ /usr/local/bin/
 
 ARG CACHE_DATE
 ARG API_GATEWAY_VERSION
@@ -59,7 +65,6 @@ ARG CONSOLE_VERSION
 ARG PIPELINE_BACKEND_VERSION
 ARG MODEL_BACKEND_VERSION
 ARG ARTIFACT_BACKEND_VERSION
-ARG CONTROLLER_MODEL_VERSION
 
 RUN echo "Instill Core release codebase cloned on ${CACHE_DATE}"
 
