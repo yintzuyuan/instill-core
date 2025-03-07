@@ -50,7 +50,7 @@ RUN git clone --depth=1 https://github.com/instill-ai/artifact-backend.git && \
 FROM alpine:${ALPINE_VERSION} AS release
 
 # 安裝必要的庫和 git
-RUN apk add --no-cache git pcre2 && \
+RUN apk add --no-cache git pcre2 bash && \
     rm -rf /var/cache/apk/*
 
 # 複製必要檔案
@@ -59,23 +59,41 @@ COPY --from=base /usr/bin/k6 /usr/bin/
 COPY --from=base /usr/local/bin/ /usr/local/bin/
 
 ARG CACHE_DATE
-ARG API_GATEWAY_VERSION
-ARG MGMT_BACKEND_VERSION
-ARG CONSOLE_VERSION
-ARG PIPELINE_BACKEND_VERSION
-ARG MODEL_BACKEND_VERSION
-ARG ARTIFACT_BACKEND_VERSION
+# 為版本變數提供預設值
+ARG API_GATEWAY_VERSION=""
+ARG MGMT_BACKEND_VERSION=""
+ARG CONSOLE_VERSION=""
+ARG PIPELINE_BACKEND_VERSION=""
+ARG MODEL_BACKEND_VERSION=""
+ARG ARTIFACT_BACKEND_VERSION=""
 
 RUN echo "Instill Core release codebase cloned on ${CACHE_DATE}"
 
 WORKDIR /instill-core
 
-RUN git clone --depth=1 -b v${API_GATEWAY_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/api-gateway.git && \
-    git clone --depth=1 -b v${MGMT_BACKEND_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/mgmt-backend.git && \
-    git clone --depth=1 -b v${CONSOLE_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/console.git && \
-    git clone --depth=1 -b v${PIPELINE_BACKEND_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/pipeline-backend.git && \
-    git clone --depth=1 -b v${MODEL_BACKEND_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/model-backend.git && \
-    git clone --depth=1 -b v${ARTIFACT_BACKEND_VERSION} -c advice.detachedHead=false https://github.com/instill-ai/artifact-backend.git
+# 使用 bash 腳本來處理有或沒有版本變數的情況
+RUN bash -c 'clone_repo() { \
+      REPO=$1; \
+      VERSION=$2; \
+      if [ -z "$VERSION" ]; then \
+        echo "Cloning latest for $REPO"; \
+        git clone --depth=1 https://github.com/instill-ai/$REPO.git; \
+      else \
+        echo "Cloning version v$VERSION for $REPO"; \
+        git clone --depth=1 -b v$VERSION -c advice.detachedHead=false https://github.com/instill-ai/$REPO.git || \
+        { echo "Branch v$VERSION not found for $REPO, falling back to main"; \
+          git clone --depth=1 https://github.com/instill-ai/$REPO.git; \
+        }; \
+      fi; \
+    }; \
+    \
+    clone_repo "api-gateway" "${API_GATEWAY_VERSION}"; \
+    clone_repo "mgmt-backend" "${MGMT_BACKEND_VERSION}"; \
+    clone_repo "console" "${CONSOLE_VERSION}"; \
+    clone_repo "pipeline-backend" "${PIPELINE_BACKEND_VERSION}"; \
+    clone_repo "model-backend" "${MODEL_BACKEND_VERSION}"; \
+    clone_repo "artifact-backend" "${ARTIFACT_BACKEND_VERSION}"; \
+    '
 
 # 設定一個預設的 CMD
 CMD ["/bin/sh"]
