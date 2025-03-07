@@ -5,7 +5,7 @@ RUN apk add --update docker docker-compose docker-cli-compose docker-cli-buildx 
 
 ARG K6_VERSION XK6_VERSION XK6_SQL_VERSION XK6_SQL_POSTGRES_VERSION
 # 安裝依賴
-RUN apt-get update && apt-get install -y git
+RUN apk add --no-cache git
 
 # 下載 xk6 原始碼
 RUN git clone https://github.com/grafana/xk6.git /xk6 && \
